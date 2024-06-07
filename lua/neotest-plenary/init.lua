@@ -110,26 +110,36 @@ function PlenaryNeotestAdapter.build_spec(args)
   -- the local path to the plenary.nvim plugin installed
   ---@type string
   local plenary_dir = vim.fn.fnamemodify(
-    debug.getinfo(require("plenary.path").__index).source:match("@?(.*[/\\])"), ":p:h:h:h"
+    debug.getinfo(require("plenary.path").__index).source:match("@?(.*[/\\])"),
+    ":p:h:h:h"
   )
 
   local cwd = assert(vim.loop.cwd())
+  local escaped_path = async.fn.escape(pos.path, '"')
   local command = vim.tbl_flatten({
     vim.loop.exepath(),
     "--headless",
-    "-i", "NONE", -- no shada
+    "-i",
+    "NONE", -- no shada
     "-n", -- no swpafile, always in-memory
     "--noplugin",
     -- add plenary.nvim to &runtimepath (should be available before init config)
-    "--cmd", ([[lua vim.opt.runtimepath:prepend('%s')]]):format(vim.fn.escape(plenary_dir, " '")),
+    "--cmd",
+    ([[lua vim.opt.runtimepath:prepend("%s")]]):format(vim.fn.escape(plenary_dir, " '")),
     -- Make lua modules at ./lua/ loadable
-    "--cmd", [[lua package.path = 'lua/?.lua;' .. 'lua/?/init.lua;' .. package.path]],
-    "-u", min_init or "NONE",
-    "-c", "source " .. test_script,
-    "-c", "lua _run_tests({results = '" .. results_path .. "', file = '" .. async.fn.escape(
-      pos.path,
-      "'"
-    ) .. "', filter = " .. vim.inspect(filters) .. "})",
+    "--cmd",
+    [[lua package.path = "lua/?.lua;lua/?/init.lua;" .. package.path]],
+    "-u",
+    min_init or "NONE",
+    "-c",
+    string.format([[source %s]], test_script),
+    "-c",
+    string.format(
+      [[ lua _run_tests({results = "%s", file = "%s", filter = %s }) ]],
+      results_path,
+      escaped_path,
+      vim.inspect(filters)
+    ),
   })
   return {
     command = command,

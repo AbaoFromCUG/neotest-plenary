@@ -75,7 +75,7 @@ _G._run_tests = function(args)
           return
         end
         func_locations[desc] =
-        vim.list_extend(func_locations[desc] or {}, { cur_line_in_test_file() })
+          vim.list_extend(func_locations[desc] or {}, { cur_line_in_test_file() })
         return busted_func(desc, func)
       end
     end
